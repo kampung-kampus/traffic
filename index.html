@@ -17,6 +17,14 @@ git push -u origin main
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     #map { height: 100vh; }
+    .info.legend {
+  background: white;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
   </style>
 </head>
 <body>
@@ -71,6 +79,33 @@ git push -u origin main
       });
     })
     .catch(error => console.error('Error fetching traffic data:', error));
+
+    // Add a legend control to the map
+const legend = L.control({ position: 'bottomright' });
+
+legend.onAdd = function (map) {
+  const div = L.DomUtil.create('div', 'info legend');
+  const bands = [1, 3, 4, 6];
+  const labels = [];
+
+  bands.forEach(band => {
+    const color = getColor(band);
+    let label = '';
+    if (band === 1) label = '0–19 km/h';
+    if (band === 3) label = '20–29 km/h';
+    if (band === 4) label = '30–39 km/h';
+    if (band === 6) label = '50–59 km/h';
+
+    labels.push(
+      `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`
+    );
+  });
+
+  div.innerHTML = `<strong>Speed Bands</strong><br>${labels.join('<br>')}`;
+  return div;
+};
+
+legend.addTo(map);
   </script>
 </body>
 </html>
