@@ -124,19 +124,7 @@ setInterval(() => {
   loadTrafficData();
 }, 60000);
 
-    //Add heatpoints
-const heatPoints = data.value.map(segment => {
-  const lat = parseFloat(segment.StartLat);
-  const lon = parseFloat(segment.StartLon);
-  const intensity = 8 - segment.SpeedBand; // lower speed = higher congestion
-  return [lat, lon, intensity];
-});
-
-L.heatLayer(heatPoints, {
-  radius: 25,
-  blur: 15,
-  maxZoom: 17
-}).addTo(map);
+   
     
    // Add legend
     const legend = L.control({ position: 'bottomright' });
