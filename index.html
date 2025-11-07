@@ -42,11 +42,9 @@
     // Initialize map centered on Woodlands Checkpoint
     const map = L.map('map').setView([1.445, 103.768], 15);
 
-    // Add OneMap.sg tiles
-    L.tileLayer('https://maps-a.onemap.sg/v3/Default/{z}/{x}/{y}.png?token=AIzaSyBa4CKUrBbOol8Hz3eu_Dv_CxN2Qe3iF1Y', {
-  maxZoom: 18,
-  attribution: 'Map data © contributors, OneMap Singapore'
-}).addTo(map);
+    // Add OpenStreetMap tiles 
+     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19,attribution: '© OpenStreetMap'}).addTo(map);
+    
     // Speed band color logic
     function getColor(speedBand) {
       switch (speedBand) {
