@@ -75,10 +75,12 @@ function loadTrafficData() {
   })
   .then(response => response.json())
   .then(data => {
-    trafficLayer.clearLayers(); // Clear previous polylines
+    trafficLayer.clearLayers();
 
     const now = new Date();
     document.getElementById('timestamp').innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+
+    const heatPoints = [];
 
     data.value.forEach(segment => {
       const lat1 = parseFloat(segment.StartLat);
@@ -87,6 +89,7 @@ function loadTrafficData() {
       const lon2 = parseFloat(segment.EndLon);
 
       if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
+        // Add polyline
         L.polyline([[lat1, lon1], [lat2, lon2]], {
           color: getColor(segment.SpeedBand),
           weight: 6,
@@ -95,13 +98,22 @@ function loadTrafficData() {
           <strong>${segment.RoadName}</strong><br>
           Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h
         `).addTo(trafficLayer);
+
+        // Add heat point
+        const intensity = 8 - segment.SpeedBand;
+        heatPoints.push([lat1, lon1, intensity]);
       }
     });
+
+    // Add heatmap layer
+    L.heatLayer(heatPoints, {
+      radius: 25,
+      blur: 15,
+      maxZoom: 17
+    }).addTo(trafficLayer);
   })
   .catch(error => console.error('Error fetching traffic data:', error));
 }
-
-    
 
     // Call script once on load
     loadTrafficData();
