@@ -36,7 +36,6 @@
   maxZoom: 18,
   attribution: 'Map data © contributors, OneMap Singapore'
 }).addTo(map);
-
     // Function to color-code by speed band
    function getColor(speedBand) {
   switch (speedBand) {
@@ -115,6 +114,24 @@ legend.onAdd = function (map) {
 };
 
 legend.addTo(map);
+    L.marker([1.445, 103.768]).addTo(map)
+  .bindPopup("Woodlands Checkpoint");
+
+L.marker([1.462, 103.763]).addTo(map)
+  .bindPopup("Johor Bahru CIQ");
+    const legendToggle = L.control({ position: 'topright' });
+legendToggle.onAdd = function () {
+  const div = L.DomUtil.create('div', 'info');
+  div.innerHTML = '<button onclick="toggleLegend()">Toggle Legend</button>';
+  return div;
+};
+legendToggle.addTo(map);
+
+function toggleLegend() {
+  const legendDiv = document.querySelector('.info.legend');
+  legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
+}
+    setInterval(() => location.reload(), 60000);
   </script>
 </body>
 </html>
