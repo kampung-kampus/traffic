@@ -6,24 +6,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>   
-     #map { height: 100vh; }
+  <style>
+    #map { height: 100vh; }
 
     .info.legend {
-  background: white;
-  padding: 10px;
-  font-size: 14px;
-  line-height: 1.5;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-        
-}
+      background: white;
+      padding: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    .info button {
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .info button:hover {
+      background-color: #0056b3;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
-
-
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -31,31 +42,31 @@
     // Initialize map centered on Woodlands Checkpoint
     const map = L.map('map').setView([1.445, 103.768], 15);
 
-    // Add  Onemap.sg tiles
- L.tileLayer('https://maps-a.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
-  maxZoom: 18,
-  attribution: 'Map data © contributors, OneMap Singapore'
-}).addTo(map);
-    // Function to color-code by speed band
-   function getColor(speedBand) {
-  switch (speedBand) {
-    case 1: return '#800026'; // dark red
-    case 2: return '#BD0026'; // red
-    case 3: return '#E31A1C'; // orange-red
-    case 4: return '#FD8D3C'; // orange
-    case 5: return '#FEB24C'; // yellow-orange
-    case 6: return '#FED976'; // yellow
-    case 7: return '#31a354'; // green
-    default: return '#999';   // gray for unknown
-  }
-}
+    // Add OneMap.sg tiles
+    L.tileLayer('https://maps-a.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: 'Map data © contributors, OneMap Singapore'
+    }).addTo(map);
 
+    // Speed band color logic
+    function getColor(speedBand) {
+      switch (speedBand) {
+        case 1: return '#800026';
+        case 2: return '#BD0026';
+        case 3: return '#E31A1C';
+        case 4: return '#FD8D3C';
+        case 5: return '#FEB24C';
+        case 6: return '#FED976';
+        case 7: return '#31a354';
+        default: return '#999';
+      }
+    }
 
-    // Fetch live traffic data from LTA API
+    // Fetch and render traffic segments
     fetch('https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands', {
       method: 'GET',
       headers: {
-        'AccountKey': '325y4IwcQU+mqCX5P+D01g==', // Replace with your LTA API key
+        'AccountKey': '325y4IwcQU+mqCX5P+D01g==',
         'accept': 'application/json'
       }
     })
@@ -67,7 +78,7 @@
         const lat2 = parseFloat(segment.EndLat);
         const lon2 = parseFloat(segment.EndLon);
 
-        // Filter for Causeway vicinity (Woodlands Checkpoint area)
+        // Filter for Causeway vicinity
         if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
           L.polyline([[lat1, lon1], [lat2, lon2]], {
             color: getColor(segment.SpeedBand),
@@ -82,55 +93,48 @@
     })
     .catch(error => console.error('Error fetching traffic data:', error));
 
-    // Add a legend control to the map
- const legend = L.control({ position: 'bottomright' });
+    // Add legend
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+      const div = L.DomUtil.create('div', 'info legend');
+      const bands = [1, 2, 3, 4, 5, 6, 7];
+      const labels = bands.map(band => {
+        const color = getColor(band);
+        const label = {
+          1: '0–19 km/h',
+          2: '10–19 km/h',
+          3: '20–29 km/h',
+          4: '30–39 km/h',
+          5: '40–49 km/h',
+          6: '50–59 km/h',
+          7: '≥60 km/h'
+        }[band];
+        return `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`;
+      });
+      div.innerHTML = `<strong>Speed Bands</strong><br>${labels.join('<br>')}`;
+      return div;
+    };
+    legend.addTo(map);
 
-legend.onAdd = function (map) {
-  const div = L.DomUtil.create('div', 'info legend');
-  const bands = [1, 2, 3, 4, 5, 6, 7];
-  const labels = [];
+    // Add checkpoint markers
+    L.marker([1.445, 103.768]).addTo(map).bindPopup("Woodlands Checkpoint");
+    L.marker([1.462, 103.763]).addTo(map).bindPopup("Johor Bahru CIQ");
 
-  bands.forEach(band => {
-    const color = getColor(band);
-    let label = '';
+    // Add legend toggle button
+    const legendToggle = L.control({ position: 'topright' });
+    legendToggle.onAdd = function () {
+      const div = L.DomUtil.create('div', 'info');
+      div.innerHTML = '<button onclick="toggleLegend()">Toggle Legend</button>';
+      return div;
+    };
+    legendToggle.addTo(map);
 
-    switch (band) {
-      case 1: label = '0–19 km/h'; break;
-      case 2: label = '10–19 km/h'; break;
-      case 3: label = '20–29 km/h'; break;
-      case 4: label = '30–39 km/h'; break;
-      case 5: label = '40–49 km/h'; break;
-      case 6: label = '50–59 km/h'; break;
-      case 7: label = '≥60 km/h'; break;
+    function toggleLegend() {
+      const legendDiv = document.querySelector('.info.legend');
+      legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
     }
 
-    labels.push(
-      `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`
-    );
-  });
-
-  div.innerHTML = `<strong>Speed Bands</strong><br>${labels.join('<br>')}`;
-  return div;
-};
-
-legend.addTo(map);
-    L.marker([1.445, 103.768]).addTo(map)
-  .bindPopup("Woodlands Checkpoint");
-
-L.marker([1.462, 103.763]).addTo(map)
-  .bindPopup("Johor Bahru CIQ");
-    const legendToggle = L.control({ position: 'topright' });
-legendToggle.onAdd = function () {
-  const div = L.DomUtil.create('div', 'info');
-  div.innerHTML = '<button onclick="toggleLegend()">Toggle Legend</button>';
-  return div;
-};
-legendToggle.addTo(map);
-
-function toggleLegend() {
-  const legendDiv = document.querySelector('.info.legend');
-  legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
-}
+    // Auto-refresh every 60 seconds
     setInterval(() => location.reload(), 60000);
   </script>
 </body>
