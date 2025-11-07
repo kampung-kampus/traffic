@@ -22,8 +22,8 @@
 </head>
 <body>
   <div id="map"></div>
-<!-- Google Maps JavaScript API Plug In -->
-  <script src="https://unpkg.com/leaflet.gridlayer.googlemutant/Leaflet.GoogleMutant.js"></script>
+
+
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -31,14 +31,11 @@
     // Initialize map centered on Woodlands Checkpoint
     const map = L.map('map').setView([1.445, 103.768], 15);
 
-    // Add Google Maps tiles
-  const googleLayer = L.gridLayer.googleMutant({
-  maxZoom: 21,
-  type: 'roadmap', // 'roadmap', 'satellite', 'terrain', 'hybrid'
-  styles: [], // Optional: custom styling
-  attribution: 'Map data ©2025 Google'
+    // Add  Onemap.sg tiles
+ L.tileLayer('https://maps-a.onemap.sg/v3/Default/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: 'Map data © contributors, OneMap Singapore'
 }).addTo(map);
-
 
     // Function to color-code by speed band
    function getColor(speedBand) {
