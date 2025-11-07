@@ -40,6 +40,7 @@
 
   <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script>
     // Initialize map centered on Woodlands Checkpoint
     const map = L.map('map').setView([1.445, 103.768], 15);
@@ -100,6 +101,7 @@ function loadTrafficData() {
   .catch(error => console.error('Error fetching traffic data:', error));
 }
 
+    
 
     // Call script once on load
     loadTrafficData();
@@ -110,6 +112,20 @@ setInterval(() => {
   loadTrafficData();
 }, 60000);
 
+    //Add heatpoints
+const heatPoints = data.value.map(segment => {
+  const lat = parseFloat(segment.StartLat);
+  const lon = parseFloat(segment.StartLon);
+  const intensity = 8 - segment.SpeedBand; // lower speed = higher congestion
+  return [lat, lon, intensity];
+});
+
+L.heatLayer(heatPoints, {
+  radius: 25,
+  blur: 15,
+  maxZoom: 17
+}).addTo(map);
+    
    // Add legend
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = function () {
