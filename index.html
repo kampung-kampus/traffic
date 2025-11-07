@@ -34,6 +34,8 @@
   </style>
 </head>
 <body>
+
+  <div id="timestamp" style="padding:10px; font-size:14px;"></div>
   <div id="map"></div>
 
   <!-- Leaflet JS -->
@@ -74,6 +76,10 @@
         const lon1 = parseFloat(segment.StartLon);
         const lat2 = parseFloat(segment.EndLat);
         const lon2 = parseFloat(segment.EndLon);
+        
+        const timestampDiv = document.getElementById('timestamp');
+        const now = new Date();
+        timestampDiv.innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
 
         // Filter for Causeway vicinity
         if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
@@ -90,22 +96,65 @@
     })
     .catch(error => console.error('Error fetching traffic data:', error));
 
-    // Add legend
+    // Modular Traffic Layer Refresh
+function loadTrafficData() {
+  fetch('https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands', {
+    method: 'GET',
+    headers: {
+      'AccountKey': '325y4IwcQU+mqCX5P+D01g==',
+      'accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    const now = new Date();
+    document.getElementById('timestamp').innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+
+    data.value.forEach(segment => {
+      const lat1 = parseFloat(segment.StartLat);
+      const lon1 = parseFloat(segment.StartLon);
+      const lat2 = parseFloat(segment.EndLat);
+      const lon2 = parseFloat(segment.EndLon);
+
+      if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
+        L.polyline([[lat1, lon1], [lat2, lon2]], {
+          color: getColor(segment.SpeedBand),
+          weight: 6,
+          opacity: 0.8
+        }).bindPopup(`
+          <strong>${segment.RoadName}</strong><br>
+          Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h
+        `).addTo(map);
+      }
+    });
+  })
+  .catch(error => console.error('Error fetching traffic data:', error));
+}
+    // Call script once on load
+    loadTrafficData();
+
+    //refresh every 60 seconds without reloading the page
+    
+setInterval(() => {
+  loadTrafficData();
+}, 60000);
+
+   // Add legend
     const legend = L.control({ position: 'bottomright' });
     legend.onAdd = function () {
       const div = L.DomUtil.create('div', 'info legend');
       const bands = [1, 2, 3, 4, 5, 6, 7];
       const labels = bands.map(band => {
         const color = getColor(band);
-        const label = {
-          1: '0–19 km/h',
-          2: '10–19 km/h',
-          3: '20–29 km/h',
-          4: '30–39 km/h',
-          5: '40–49 km/h',
-          6: '50–59 km/h',
-          7: '≥60 km/h'
-        }[band];
+       const label = {
+  1: '0–10 km/h',
+  2: '11–20 km/h',
+  3: '21–30 km/h',
+  4: '31–40 km/h',
+  5: '41–50 km/h',
+  6: '51–60 km/h',
+  7: '>60 km/h'
+}[band];
         return `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`;
       });
       div.innerHTML = `<strong>Speed Bands</strong><br>${labels.join('<br>')}`;
