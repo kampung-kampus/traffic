@@ -42,6 +42,9 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script>
+// declare a global value
+let timestampDiv;
+    
     // Initialize map centered on Woodlands Checkpoint
     const map = L.map('map').setView([1.445, 103.768], 15);
 
@@ -79,7 +82,10 @@ function loadTrafficData() {
 
     const now = new Date();
    
-document.getElementById('map-timestamp').innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+if (timestampDiv) {
+  timestampDiv.innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+}
+    
     const heatPoints = [];
 
     data.value.forEach(segment => {
@@ -167,10 +173,10 @@ setInterval(() => {
 // Add timestamp control styled like legend
 const timestampControl = L.control({ position: 'bottomleft' });
 timestampControl.onAdd = function () {
-  const div = L.DomUtil.create('div', 'info legend');
-  div.id = 'map-timestamp';
-  div.innerHTML = 'Last updated: —';
-  return div;
+  timestampDiv = L.DomUtil.create('div', 'info legend');
+  timestampDiv.id = 'map-timestamp';
+  timestampDiv.innerHTML = 'Last updated: —';
+  return timestampDiv;
 };
 timestampControl.addTo(map);
   
