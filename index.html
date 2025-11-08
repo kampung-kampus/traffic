@@ -1,188 +1,375 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Singapore Causeway Traffic</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; }
+ <!DOCTYPE html>
 
-    .info.legend {
+<html>
+
+<head>
+
+  <title>Singapore Causeway Traffic</title>
+
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <style>
+
+    #map { height: 100vh; }
+     .info.legend {
+
       background: white;
+
       padding: 10px;
+
       font-size: 14px;
+
       line-height: 1.5;
+
       border-radius: 5px;
+
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
+
     }
+
+
 
     .info button {
+
       padding: 6px 12px;
+
       font-size: 13px;
+
       border: none;
+
       background-color: #007bff;
+
       color: white;
+
       border-radius: 4px;
+
+      
       cursor: pointer;
+
     }
+
+
 
     .info button:hover {
+
       background-color: #0056b3;
+
     }
+
   </style>
+
 </head>
+
 <body>
 
- 
   <div id="map"></div>
 
   <!-- Leaflet JS -->
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
   <script>
+
 // declare a global value
+
 let timestampDiv;
+
     
+
     // Initialize map centered on Woodlands Checkpoint
+
     const map = L.map('map').setView([1.445, 103.768], 15);
 
+
+
     // Add OpenStreetMap tiles 
+
      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19,attribution: '© OpenStreetMap'}).addTo(map);
-    
-    // Speed band color logic
+
+     // Speed band color logic
+
     function getColor(speedBand) {
+
       switch (speedBand) {
+
         case 1: return '#800026';
+
         case 2: return '#BD0026';
+
         case 3: return '#E31A1C';
+
         case 4: return '#FD8D3C';
+
         case 5: return '#FEB24C';
+
         case 6: return '#FED976';
+
         case 7: return '#31a354';
+
         default: return '#999';
+
       }
+
     }
+
 
     // Modular Traffic Layer Refresh
+
  let trafficLayer = L.layerGroup().addTo(map);
 
-function loadTrafficData() {
-  fetch('https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands', {
-    method: 'GET',
-    headers: {
-      'AccountKey': '325y4IwcQU+mqCX5P+D01g==',
-      'accept': 'application/json'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    trafficLayer.clearLayers();
+
+
+function updateTimestamp() {
+
+  if (timestampDiv) {
 
     const now = new Date();
-   
-if (timestampDiv) {
-  timestampDiv.innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+
+    timestampDiv.innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+
+  }
+
 }
-    
+
+function loadTrafficData() {
+  
+  // Update timestamp immediately when starting the fetch
+
+  updateTimestamp();
+
+  
+
+  fetch('https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands', {
+
+    method: 'GET',
+
+    headers: {
+
+      'AccountKey': '325y4IwcQU+mqCX5P+D01g==',
+
+      'accept': 'application/json'
+
+    }
+
+  })
+
+  .then(response => response.json())
+
+  .then(data => {
+
+    trafficLayer.clearLayers();
+
     const heatPoints = [];
 
+
+
     data.value.forEach(segment => {
+
       const lat1 = parseFloat(segment.StartLat);
+
       const lon1 = parseFloat(segment.StartLon);
+
       const lat2 = parseFloat(segment.EndLat);
+
       const lon2 = parseFloat(segment.EndLon);
 
+
+
       if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
-        // Add polyline
+ // Add polyline
+
         L.polyline([[lat1, lon1], [lat2, lon2]], {
+
           color: getColor(segment.SpeedBand),
+
           weight: 6,
+
           opacity: 0.8
+
         }).bindPopup(`
+
           <strong>${segment.RoadName}</strong><br>
+
           Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h
+
         `).addTo(trafficLayer);
 
-        // Add heat point
+
+ // Add heat point
+
         const intensity = 8 - segment.SpeedBand;
+
         heatPoints.push([lat1, lon1, intensity]);
+
       }
+
     });
 
+
+
     // Add heatmap layer
+
     L.heatLayer(heatPoints, {
+
       radius: 25,
+
       blur: 15,
+
       maxZoom: 17
+
     }).addTo(trafficLayer);
+
   })
-  .catch(error => console.error('Error fetching traffic data:', error));
+
+  .catch(error => {
+ console.error('Error fetching traffic data:', error);
+    // Update timestamp even on error to show when the last attempt was made
+
+    updateTimestamp();
+
+  });
+
 }
 
-    //refresh every 60 seconds without reloading the page
+   //refresh every 60 seconds without reloading the page
+
     
+
 setInterval(() => {
+
   loadTrafficData();
+
 }, 60000);
 
-  
-   // Add legend
+     // Add legend
+
     const legend = L.control({ position: 'bottomright' });
+
     legend.onAdd = function () {
+
       const div = L.DomUtil.create('div', 'info legend');
+
       const bands = [1, 2, 3, 4, 5, 6, 7];
+
       const labels = bands.map(band => {
+
         const color = getColor(band);
+
        const label = {
+
   1: '0–10 km/h',
+
   2: '11–20 km/h',
+
   3: '21–30 km/h',
+
   4: '31–40 km/h',
+
   5: '41–50 km/h',
+
   6: '51–60 km/h',
+
   7: '>60 km/h'
-}[band];
+
+
+    }[band];
+
         return `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`;
+
       });
+
       div.innerHTML = `<strong>Speed Bands</strong><br>${labels.join('<br>')}`;
+
       return div;
+
     };
+
     legend.addTo(map);
 
+
+
     // Add checkpoint markers
+
     L.marker([1.445, 103.768]).addTo(map).bindPopup("Woodlands Checkpoint");
+
     L.marker([1.462, 103.763]).addTo(map).bindPopup("Johor Bahru CIQ");
 
+
+
     // Add legend toggle button
-    const legendToggle = L.control({ position: 'topright' });
+ const legendToggle = L.control({ position: 'topright' });
+
     legendToggle.onAdd = function () {
+
       const div = L.DomUtil.create('div', 'info');
+
       div.innerHTML = '<button onclick="toggleLegend()">Toggle Legend</button>';
+
       return div;
+
     };
+
     legendToggle.addTo(map);
 
+
+
   function toggleLegend() {
+
   const legendDiv = document.getElementById('legend-box');
+
   if (legendDiv) {
+
     legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
+
   }
+
 }
-// Add timestamp control styled like legend
+    // Add timestamp control styled like legend
+
 const timestampControl = L.control({ position: 'bottomleft' });
+
 timestampControl.onAdd = function () {
+
   timestampDiv = L.DomUtil.create('div', 'info legend');
+
   timestampDiv.id = 'map-timestamp';
-  timestampDiv.innerHTML = 'Last updated: —';
+
+  // Set initial timestamp immediately
+
+  const now = new Date();
+
+  timestampDiv.innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
+
   return timestampDiv;
+
 };
+
 timestampControl.addTo(map);
-  
+
 // Call script once on load
+
  setTimeout(loadTrafficData, 100);
+
   </script>
+
 </body>
+
 </html>
+
+
+
+
+
+
+
+
+
  
