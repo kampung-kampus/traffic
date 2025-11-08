@@ -1,4 +1,5 @@
- <!DOCTYPE html>
+
+<!DOCTYPE html>
 
 <html>
 
@@ -17,7 +18,10 @@
   <style>
 
     #map { height: 100vh; }
-     .info.legend {
+
+
+
+    .info.legend {
 
       background: white;
 
@@ -49,7 +53,6 @@
 
       border-radius: 4px;
 
-      
       cursor: pointer;
 
     }
@@ -68,7 +71,13 @@
 
 <body>
 
+
+
+ 
+
   <div id="map"></div>
+
+
 
   <!-- Leaflet JS -->
 
@@ -94,31 +103,38 @@ let timestampDiv;
 
      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19,attribution: '© OpenStreetMap'}).addTo(map);
 
-     // Speed band color logic
+    
+
+    // Speed band color logic - 4 bands
 
     function getColor(speedBand) {
 
-      switch (speedBand) {
+      // Map SpeedBand to 4 color categories
 
-        case 1: return '#800026';
+      if (speedBand === 1) {
 
-        case 2: return '#BD0026';
+        return '#e01227'; // Red: 0-10 km/h
 
-        case 3: return '#E31A1C';
+      } else if (speedBand === 2 || speedBand === 3) {
 
-        case 4: return '#FD8D3C';
+        return '#f27e57'; // Orange: 11-30 km/h
 
-        case 5: return '#FEB24C';
+      } else if (speedBand === 4 || speedBand === 5) {
 
-        case 6: return '#FED976';
+        return '#fafaa2'; // Yellow: 31-50 km/h
 
-        case 7: return '#31a354';
+      } else if (speedBand === 6 || speedBand === 7) {
 
-        default: return '#999';
+        return '#82e681'; // Green: >51 km/h
+
+      } else {
+
+        return '#999'; // Default gray
 
       }
 
     }
+
 
 
     // Modular Traffic Layer Refresh
@@ -140,7 +156,7 @@ function updateTimestamp() {
 }
 
 function loadTrafficData() {
-  
+
   // Update timestamp immediately when starting the fetch
 
   updateTimestamp();
@@ -167,6 +183,8 @@ function loadTrafficData() {
 
     trafficLayer.clearLayers();
 
+    
+
     const heatPoints = [];
 
 
@@ -184,7 +202,8 @@ function loadTrafficData() {
 
 
       if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
- // Add polyline
+
+        // Add polyline
 
         L.polyline([[lat1, lon1], [lat2, lon2]], {
 
@@ -203,7 +222,8 @@ function loadTrafficData() {
         `).addTo(trafficLayer);
 
 
- // Add heat point
+
+        // Add heat point
 
         const intensity = 8 - segment.SpeedBand;
 
@@ -230,7 +250,9 @@ function loadTrafficData() {
   })
 
   .catch(error => {
- console.error('Error fetching traffic data:', error);
+
+    console.error('Error fetching traffic data:', error);
+
     // Update timestamp even on error to show when the last attempt was made
 
     updateTimestamp();
@@ -239,7 +261,9 @@ function loadTrafficData() {
 
 }
 
-   //refresh every 60 seconds without reloading the page
+
+
+    //refresh every 60 seconds without reloading the page
 
     
 
@@ -249,7 +273,11 @@ setInterval(() => {
 
 }, 60000);
 
-     // Add legend
+
+
+  
+
+   // Add legend - 4 speed bands
 
     const legend = L.control({ position: 'bottomright' });
 
@@ -257,32 +285,23 @@ setInterval(() => {
 
       const div = L.DomUtil.create('div', 'info legend');
 
-      const bands = [1, 2, 3, 4, 5, 6, 7];
+      // Define 4 speed bands with colors and labels
 
-      const labels = bands.map(band => {
+      const speedBands = [
 
-        const color = getColor(band);
+        { label: '0–10 km/h', color: '#e01227' },      // Red
 
-       const label = {
+        { label: '11–30 km/h', color: '#f27e57' },     // Orange
 
-  1: '0–10 km/h',
+        { label: '31–50 km/h', color: '#fafaa2' },     // Yellow
 
-  2: '11–20 km/h',
+        { label: '>51 km/h', color: '#82e681' }        // Green
 
-  3: '21–30 km/h',
+      ];
 
-  4: '31–40 km/h',
+      const labels = speedBands.map(band => {
 
-  5: '41–50 km/h',
-
-  6: '51–60 km/h',
-
-  7: '>60 km/h'
-
-
-    }[band];
-
-        return `<i style="background:${color}; width:18px; height:18px; display:inline-block; margin-right:8px;"></i>${label}`;
+        return `<i style="background:${band.color}; width:18px; height:18px; display:inline-block; margin-right:8px; border:1px solid #ccc;"></i>${band.label}`;
 
       });
 
@@ -305,7 +324,8 @@ setInterval(() => {
 
 
     // Add legend toggle button
- const legendToggle = L.control({ position: 'topright' });
+
+    const legendToggle = L.control({ position: 'topright' });
 
     legendToggle.onAdd = function () {
 
@@ -332,7 +352,7 @@ setInterval(() => {
   }
 
 }
-    // Add timestamp control styled like legend
+// Add timestamp control styled like legend
 
 const timestampControl = L.control({ position: 'bottomleft' });
 
@@ -354,6 +374,8 @@ timestampControl.onAdd = function () {
 
 timestampControl.addTo(map);
 
+  
+
 // Call script once on load
 
  setTimeout(loadTrafficData, 100);
@@ -363,9 +385,6 @@ timestampControl.addTo(map);
 </body>
 
 </html>
-
-
-
 
 
 
