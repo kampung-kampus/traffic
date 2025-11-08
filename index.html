@@ -203,6 +203,10 @@ function loadTrafficData() {
 
   .then(data => {
 
+    console.log('Traffic data received:', data.value ? data.value.length : 0, 'segments');
+
+    
+
     // Clear both layers
 
     polylineLayerGroup.clearLayers();
@@ -212,6 +216,8 @@ function loadTrafficData() {
     
 
     const heatPoints = [];
+
+    let segmentCount = 0;
 
 
 
@@ -229,6 +235,10 @@ function loadTrafficData() {
 
       if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
 
+        segmentCount++;
+
+        
+
         // Add polyline to polyline layer group
 
         L.polyline([[lat1, lon1], [lat2, lon2]], {
@@ -243,21 +253,31 @@ function loadTrafficData() {
 
           <strong>${segment.RoadName}</strong><br>
 
-          Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h
+          Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h<br>
+
+          Speed Band: ${segment.SpeedBand}
 
         `).addTo(polylineLayerGroup);
 
 
 
-        // Add heat point
+        // Add heat point with higher intensity for better visibility
 
-        const intensity = 8 - segment.SpeedBand;
+        const intensity = (8 - segment.SpeedBand) * 0.3; // Scale intensity
 
         heatPoints.push([lat1, lon1, intensity]);
 
       }
 
     });
+
+
+
+    console.log('Segments in view area:', segmentCount);
+
+    console.log('Heat points created:', heatPoints.length);
+
+    console.log('Current view mode:', currentViewMode);
 
 
 
@@ -273,19 +293,27 @@ function loadTrafficData() {
 
       }
 
-      // Create new heatmap layer
+      // Create new heatmap layer with enhanced visibility
 
       heatmapLayer = L.heatLayer(heatPoints, {
 
-        radius: 25,
+        radius: 40,  // Increased from 25 for better visibility
 
-        blur: 15,
+        blur: 20,    // Increased from 15
 
-        maxZoom: 17
+        maxZoom: 17,
+
+        minOpacity: 0.3  // Minimum opacity for better visibility
 
       });
 
       heatmapLayerGroup.addLayer(heatmapLayer);
+
+      console.log('Heatmap layer created');
+
+    } else {
+
+      console.warn('No heat points to display');
 
     }
 
@@ -295,11 +323,15 @@ function loadTrafficData() {
 
     updateViewMode();
 
+    console.log('View updated. Polyline layer on map:', map.hasLayer(polylineLayerGroup), 'Heatmap layer on map:', map.hasLayer(heatmapLayerGroup));
+
   })
 
   .catch(error => {
 
     console.error('Error fetching traffic data:', error);
+
+    console.error('Error details:', error.message);
 
     // Update timestamp even on error to show when the last attempt was made
 
@@ -459,6 +491,8 @@ setInterval(() => {
 
     currentViewMode = currentViewMode === 'polyline' ? 'heatmap' : 'polyline';
 
+    console.log('Toggling to:', currentViewMode);
+
     
 
     // Update the view
@@ -485,21 +519,29 @@ setInterval(() => {
 
       // Show polylines, hide heatmap
 
-      if (!map.hasLayer(polylineLayerGroup)) {
-
-        polylineLayerGroup.addTo(map);
-
-      }
-
       if (map.hasLayer(heatmapLayerGroup)) {
 
         map.removeLayer(heatmapLayerGroup);
 
       }
 
+      if (!map.hasLayer(polylineLayerGroup)) {
+
+        polylineLayerGroup.addTo(map);
+
+      }
+
+      console.log('Polyline view active');
+
     } else {
 
       // Show heatmap, hide polylines
+
+      if (map.hasLayer(polylineLayerGroup)) {
+
+        map.removeLayer(polylineLayerGroup);
+
+      }
 
       if (!map.hasLayer(heatmapLayerGroup)) {
 
@@ -507,11 +549,7 @@ setInterval(() => {
 
       }
 
-      if (map.hasLayer(polylineLayerGroup)) {
-
-        map.removeLayer(polylineLayerGroup);
-
-      }
+      console.log('Heatmap view active');
 
     }
 
@@ -549,6 +587,15 @@ timestampControl.addTo(map);
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
 
 
 
