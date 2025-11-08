@@ -115,9 +115,6 @@ document.getElementById('map-timestamp').innerHTML = `Last updated: ${now.toLoca
   .catch(error => console.error('Error fetching traffic data:', error));
 }
 
-    // Call script once on load
-    loadTrafficData();
-
     //refresh every 60 seconds without reloading the page
     
 setInterval(() => {
@@ -175,6 +172,10 @@ timestampControl.onAdd = function () {
   return div;
 };
 timestampControl.addTo(map);
+    timestampControl.addTo(map);
+
+// Call script once on load
+loadTrafficData();
   </script>
 </body>
 </html>
