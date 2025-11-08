@@ -275,12 +275,12 @@ setInterval(() => {
 }, 60000);
 
 
-
+    
   
 
    // Add legend - 4 speed bands
 
-    const legend = L.control({ position: 'bottomright' });
+      legendControl = L.control({ position: 'bottomright' });
 
     legend.onAdd = function () {
 
@@ -312,7 +312,7 @@ setInterval(() => {
 
     };
 
-    legend.addTo(map);
+      legendControl.addTo(map);
 
 
 
@@ -340,21 +340,35 @@ setInterval(() => {
 
     legendToggle.addTo(map);
 
+ function toggleLegend() {
 
+    const legendDiv = document.getElementById('legend-box');
 
-  function toggleLegend() {
+    if (legendDiv) {
 
-  const legendDiv = document.getElementById('legend-box');
+      // Get the Leaflet control container (parent of the legend div)
 
-  if (legendDiv) {
+      const container = legendDiv.parentElement;
 
-    legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
-    const isHidden = legendDiv.style.display === 'none';
+      if (container) {
 
-    legendDiv.style.display = isHidden ? 'block' : 'none';
+        // Toggle the container's visibility
+
+        if (container.style.display === 'none') {
+
+          container.style.display = '';
+
+        } else {
+
+          container.style.display = 'none';
+
+        }
+
+      }
+
+    }
   }
-
-}
+ 
 // Add timestamp control styled like legend
 
 const timestampControl = L.control({ position: 'bottomleft' });
