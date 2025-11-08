@@ -282,7 +282,7 @@ setInterval(() => {
 
       legendControl = L.control({ position: 'bottomright' });
 
-    legend.onAdd = function () {
+    legendControl.onAdd = function () {
 
       const div = L.DomUtil.create('div', 'info legend');
       div.id = 'legend-box';
