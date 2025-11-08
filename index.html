@@ -89,10 +89,16 @@
 // declare a global value
 
 let timestampDiv;
-    let legendControl;
 
-    
+let legendControl;
 
+// View mode: 'heatmap' or 'polyline'
+
+let currentViewMode = 'polyline'; // Start with polyline view
+
+let heatmapLayer = null;
+
+let viewToggleButton = null;
     // Initialize map centered on Woodlands Checkpoint
 
     const map = L.map('map').setView([1.445, 103.768], 15);
@@ -113,8 +119,7 @@ let timestampDiv;
 
       if (speedBand === 1) {
 
-        
-       return '#ab1121'; // Red: 0-10 km/h
+        return '#ab1121'; // Red: 0-10 km/h
 
       } else if (speedBand === 2 || speedBand === 3) {
 
@@ -138,9 +143,25 @@ let timestampDiv;
 
 
 
-    // Modular Traffic Layer Refresh
+    // Modular Traffic Layer Refresh - separate layers for heatmap and polylines
 
- let trafficLayer = L.layerGroup().addTo(map);
+ let polylineLayerGroup = L.layerGroup();
+
+ let heatmapLayerGroup = L.layerGroup();
+
+ 
+
+ // Add initial layer based on current view mode
+
+ if (currentViewMode === 'polyline') {
+
+   polylineLayerGroup.addTo(map);
+
+ } else {
+
+   heatmapLayerGroup.addTo(map);
+
+ }
 
 
 
@@ -182,7 +203,11 @@ function loadTrafficData() {
 
   .then(data => {
 
-    trafficLayer.clearLayers();
+    // Clear both layers
+
+    polylineLayerGroup.clearLayers();
+
+    heatmapLayerGroup.clearLayers();
 
     
 
@@ -204,7 +229,7 @@ function loadTrafficData() {
 
       if (lat1 > 1.44 && lat1 < 1.446 && lon1 > 103.765 && lon1 < 103.77) {
 
-        // Add polyline
+        // Add polyline to polyline layer group
 
         L.polyline([[lat1, lon1], [lat2, lon2]], {
 
@@ -220,7 +245,7 @@ function loadTrafficData() {
 
           Speed: ${segment.MinimumSpeed}–${segment.MaximumSpeed} km/h
 
-        `).addTo(trafficLayer);
+        `).addTo(polylineLayerGroup);
 
 
 
@@ -236,17 +261,39 @@ function loadTrafficData() {
 
 
 
-    // Add heatmap layer
+    // Create heatmap layer
 
-    L.heatLayer(heatPoints, {
+    if (heatPoints.length > 0) {
 
-      radius: 25,
+      // Remove old heatmap layer if it exists
 
-      blur: 15,
+      if (heatmapLayer) {
 
-      maxZoom: 17
+        heatmapLayerGroup.removeLayer(heatmapLayer);
 
-    }).addTo(trafficLayer);
+      }
+
+      // Create new heatmap layer
+
+      heatmapLayer = L.heatLayer(heatPoints, {
+
+        radius: 25,
+
+        blur: 15,
+
+        maxZoom: 17
+
+      });
+
+      heatmapLayerGroup.addLayer(heatmapLayer);
+
+    }
+
+    
+
+    // Update view based on current mode
+
+    updateViewMode();
 
   })
 
@@ -275,17 +322,19 @@ setInterval(() => {
 }, 60000);
 
 
-    
+
   
 
    // Add legend - 4 speed bands
 
-      legendControl = L.control({ position: 'bottomright' });
+    legendControl = L.control({ position: 'bottomright' });
 
     legendControl.onAdd = function () {
 
       const div = L.DomUtil.create('div', 'info legend');
+
       div.id = 'legend-box';
+
       // Define 4 speed bands with colors and labels
 
       const speedBands = [
@@ -312,7 +361,7 @@ setInterval(() => {
 
     };
 
-      legendControl.addTo(map);
+    legendControl.addTo(map);
 
 
 
@@ -340,7 +389,39 @@ setInterval(() => {
 
     legendToggle.addTo(map);
 
- function toggleLegend() {
+
+
+    // Add view toggle button (heatmap/polyline)
+
+    const viewToggle = L.control({ position: 'topright' });
+
+    viewToggle.onAdd = function () {
+
+      const div = L.DomUtil.create('div', 'info');
+
+      viewToggleButton = document.createElement('button');
+
+      viewToggleButton.innerHTML = currentViewMode === 'polyline' ? 'Show Heatmap' : 'Show Polylines';
+
+      viewToggleButton.style.cssText = 'padding: 6px 12px; font-size: 13px; border: none; background-color: #28a745; color: white; border-radius: 4px; cursor: pointer; margin-top: 5px; width: 100%;';
+
+      viewToggleButton.onmouseover = function() { this.style.backgroundColor = '#218838'; };
+
+      viewToggleButton.onmouseout = function() { this.style.backgroundColor = '#28a745'; };
+
+      viewToggleButton.onclick = toggleViewMode;
+
+      div.appendChild(viewToggleButton);
+
+      return div;
+
+    };
+
+    viewToggle.addTo(map);
+
+
+
+  function toggleLegend() {
 
     const legendDiv = document.getElementById('legend-box');
 
@@ -367,8 +448,74 @@ setInterval(() => {
       }
 
     }
+
   }
- 
+
+  
+
+  function toggleViewMode() {
+
+    // Switch view mode
+
+    currentViewMode = currentViewMode === 'polyline' ? 'heatmap' : 'polyline';
+
+    
+
+    // Update the view
+
+    updateViewMode();
+
+    
+
+    // Update button text
+
+    if (viewToggleButton) {
+
+      viewToggleButton.innerHTML = currentViewMode === 'polyline' ? 'Show Heatmap' : 'Show Polylines';
+
+    }
+
+  }
+
+  
+
+  function updateViewMode() {
+
+    if (currentViewMode === 'polyline') {
+
+      // Show polylines, hide heatmap
+
+      if (!map.hasLayer(polylineLayerGroup)) {
+
+        polylineLayerGroup.addTo(map);
+
+      }
+
+      if (map.hasLayer(heatmapLayerGroup)) {
+
+        map.removeLayer(heatmapLayerGroup);
+
+      }
+
+    } else {
+
+      // Show heatmap, hide polylines
+
+      if (!map.hasLayer(heatmapLayerGroup)) {
+
+        heatmapLayerGroup.addTo(map);
+
+      }
+
+      if (map.hasLayer(polylineLayerGroup)) {
+
+        map.removeLayer(polylineLayerGroup);
+
+      }
+
+    }
+
+  }
 // Add timestamp control styled like legend
 
 const timestampControl = L.control({ position: 'bottomleft' });
@@ -405,7 +552,3 @@ timestampControl.addTo(map);
 
 
 
-
-
-
- 
