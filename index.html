@@ -158,10 +158,12 @@ setInterval(() => {
     };
     legendToggle.addTo(map);
 
-    function toggleLegend() {
-      const legendDiv = document.querySelector('.info.legend');
-      legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
-    }
+  function toggleLegend() {
+  const legendDiv = document.getElementById('legend-box');
+  if (legendDiv) {
+    legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
+  }
+}
 // Add timestamp control styled like legend
 const timestampControl = L.control({ position: 'bottomleft' });
 timestampControl.onAdd = function () {
