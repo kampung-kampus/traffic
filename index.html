@@ -185,7 +185,15 @@ function loadTrafficData() {
 
   
 
-  fetch('https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands', {
+  const apiUrl = 'https://datamall2.mytransport.sg/ltaodataservice/TrafficSpeedBands';
+
+  
+
+  // Try direct fetch first (in case CORS is fixed or running locally)
+
+  // If that fails, the catch will handle it
+
+  fetch(apiUrl, {
 
     method: 'GET',
 
@@ -195,13 +203,101 @@ function loadTrafficData() {
 
       'accept': 'application/json'
 
-    }
+    },
+
+    mode: 'cors'
 
   })
 
-  .then(response => response.json())
+  .then(response => {
+
+    if (!response.ok) {
+
+      throw new Error(`HTTP error! status: ${response.status}`);
+
+    }
+
+    return response.json();
+
+  })
 
   .then(data => {
+
+    // Process the data using shared function
+
+    processTrafficData(data);
+
+  })
+
+  .catch(error => {
+
+    console.error('Direct fetch failed (CORS issue), trying proxy:', error.message);
+
+    
+
+    // Fallback: Use CORS proxy
+
+    // Note: Most free CORS proxies don't forward custom headers
+
+    // For production, you should use your own backend proxy server
+
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl + '?$AccountKey=325y4IwcQU+mqCX5P+D01g==')}`;
+
+    
+
+    fetch(proxyUrl, {
+
+      method: 'GET',
+
+      headers: {
+
+        'accept': 'application/json'
+
+      }
+
+    })
+
+    .then(response => response.json())
+
+    .then(proxyData => {
+
+      // allorigins returns data in .contents property
+
+      const data = typeof proxyData.contents === 'string' ? JSON.parse(proxyData.contents) : proxyData.contents;
+
+      console.log('Data received via proxy');
+
+      
+
+      // Process the data (reuse the same processing logic)
+
+      processTrafficData(data);
+
+    })
+
+    .catch(proxyError => {
+
+      console.error('Proxy also failed:', proxyError);
+
+      console.error('CORS Error: The API requires a backend proxy server to work from a browser.');
+
+      console.error('Solutions:');
+      console.error('1. Run this page from a local server (not file://)');
+      console.error('2. Set up your own backend proxy server');
+      console.error('3. Use a browser extension to disable CORS (development only)');
+
+      updateTimestamp();
+
+    });
+
+  });
+
+}
+  
+
+// Extract data processing into separate function for reuse
+
+function processTrafficData(data) {
 
     console.log('Traffic data received:', data.value ? data.value.length : 0, 'segments');
 
@@ -325,21 +421,7 @@ function loadTrafficData() {
 
     console.log('View updated. Polyline layer on map:', map.hasLayer(polylineLayerGroup), 'Heatmap layer on map:', map.hasLayer(heatmapLayerGroup));
 
-  })
-
-  .catch(error => {
-
-    console.error('Error fetching traffic data:', error);
-
-    console.error('Error details:', error.message);
-
-    // Update timestamp even on error to show when the last attempt was made
-
-    updateTimestamp();
-
-  });
-
-}
+  }
 
 
 
@@ -587,6 +669,19 @@ timestampControl.addTo(map);
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
