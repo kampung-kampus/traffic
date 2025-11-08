@@ -90,6 +90,7 @@
 // declare a global value
 
 let timestampDiv;
+    let legendControl;
 
     
 
@@ -285,7 +286,7 @@ setInterval(() => {
     legend.onAdd = function () {
 
       const div = L.DomUtil.create('div', 'info legend');
-
+      div.id = 'legend-box';
       // Define 4 speed bands with colors and labels
 
       const speedBands = [
@@ -349,7 +350,9 @@ setInterval(() => {
   if (legendDiv) {
 
     legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
+    const isHidden = legendDiv.style.display === 'none';
 
+    legendDiv.style.display = isHidden ? 'block' : 'none';
   }
 
 }
