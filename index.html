@@ -35,7 +35,7 @@
 </head>
 <body>
 
-  <div id="timestamp" style="padding:10px; font-size:14px;"></div>
+ 
   <div id="map"></div>
 
   <!-- Leaflet JS -->
@@ -78,8 +78,8 @@ function loadTrafficData() {
     trafficLayer.clearLayers();
 
     const now = new Date();
-    document.getElementById('timestamp').innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
-
+   
+document.getElementById('map-timestamp').innerHTML = `Last updated: ${now.toLocaleString('en-SG', { hour12: false })}`;
     const heatPoints = [];
 
     data.value.forEach(segment => {
@@ -166,7 +166,15 @@ setInterval(() => {
       const legendDiv = document.querySelector('.info.legend');
       legendDiv.style.display = (legendDiv.style.display === 'none') ? 'block' : 'none';
     }
-
+// Add timestamp control styled like legend
+const timestampControl = L.control({ position: 'bottomleft' });
+timestampControl.onAdd = function () {
+  const div = L.DomUtil.create('div', 'info legend');
+  div.id = 'map-timestamp';
+  div.innerHTML = 'Last updated: —';
+  return div;
+};
+timestampControl.addTo(map);
   </script>
 </body>
 </html>
