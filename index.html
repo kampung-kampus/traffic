@@ -99,6 +99,16 @@ let currentViewMode = 'polyline'; // Start with polyline view
 let heatmapLayer = null;
 
 let viewToggleButton = null;
+
+// Proxy server URL - Update this after deploying your serverless function
+
+// For Vercel: https://your-project.vercel.app/api/proxy
+
+// For local testing: http://localhost:3000/api/proxy
+
+// Leave empty to try direct fetch first, then fallback proxy
+
+const PROXY_URL = ''; // Set this to your deployed proxy URL
     // Initialize map centered on Woodlands Checkpoint
 
     const map = L.map('map').setView([1.445, 103.768], 15);
@@ -669,19 +679,6 @@ timestampControl.addTo(map);
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
